@@ -1,8 +1,5 @@
-require "boxen/keychain"
-require "boxen/project"
 require "fileutils"
 require "json"
-require "octokit"
 require "shellwords"
 
 module Boxen
@@ -25,17 +22,6 @@ module Boxen
           end
         end
 
-        keychain        = Boxen::Keychain.new config.user
-        config.token    = keychain.token
-
-        if config.enterprise?
-          # configure to talk to GitHub Enterprise
-          Octokit.configure do |c|
-            c.api_endpoint = "#{config.ghurl}/api/v3"
-            c.web_endpoint = config.ghurl
-          end
-        end
-
         yield config if block_given?
       end
     end
@@ -52,14 +38,7 @@ module Boxen
         :login        => config.login,
         :name         => config.name,
         :puppetdir    => config.puppetdir,
-        :repodir      => config.repodir,
-        :reponame     => config.reponame,
-        :ghurl        => config.ghurl,
-        :srcdir       => config.srcdir,
         :user         => config.user,
-        :repotemplate => config.repotemplate,
-        :s3host       => config.s3host,
-        :s3bucket     => config.s3bucket
       }
 
       file = "#{config.homedir}/config/boxen/defaults.json"
@@ -68,9 +47,6 @@ module Boxen
       File.open file, "wb" do |f|
         f.write JSON.generate Hash[attrs.reject { |k, v| v.nil? }]
       end
-
-      keychain          = Boxen::Keychain.new config.user
-      keychain.token    = config.token
 
       config
     end
@@ -82,13 +58,6 @@ module Boxen
       @pull = true
 
       yield self if block_given?
-    end
-
-    # Create an API instance using the current user creds. A new
-    # instance is created any time `token` changes.
-
-    def api
-      @api ||= Octokit::Client.new :login => token, :password => 'x-oauth-basic'
     end
 
     # Spew a bunch of debug logging? Default is `false`.
@@ -185,23 +154,6 @@ module Boxen
 
     attr_writer :graph
 
-    # An Array of Boxen::Project entries, one for each project Boxen
-    # knows how to manage.
-    #
-    # FIX: Revisit this once we restructure template projects. It's
-    # broken for several reasons: It assumes paths that won't be
-    # right, and it assumes projects live in the same repo as this
-    # file.
-
-    def projects
-      files = Dir["#{repodir}/modules/projects/manifests/*.pp"]
-      names = files.map { |m| File.basename m, ".pp" }.sort
-
-      names.map do |name|
-        Boxen::Project.new "#{srcdir}/#{name}"
-      end
-    end
-
     # The directory where Puppet expects configuration (which we don't
     # use) and runtime information (which we generally don't care
     # about). Default is `/tmp/boxen/puppet`. Respects the
@@ -222,78 +174,6 @@ module Boxen
 
     attr_writer :repodir
 
-    # The repo on GitHub to use for error reports and automatic
-    # updates, in `owner/repo` format. Default is the `origin` of a
-    # Git repo in `repodir`, if it exists and points at GitHub.
-    # Respects the `BOXEN_REPO_NAME` environment variable.
-
-    def reponame
-      override = @reponame || ENV["BOXEN_REPO_NAME"]
-      return override unless override.nil?
-
-      if File.directory? repodir
-        ghuri = URI(ghurl)
-        url = Dir.chdir(repodir) { `git config remote.origin.url`.strip }
-
-        # find the path and strip off the .git suffix
-        repo_exp = Regexp.new Regexp.escape(ghuri.host) + "[/:]([^/]+/[^/]+)"
-        if $?.success? && repo_exp.match(url)
-          @reponame = $1.sub /\.git$/, ""
-        end
-      end
-    end
-
-    attr_writer :reponame
-
-    # GitHub location (public or GitHub Enterprise)
-
-    def ghurl
-      @ghurl || ENV["BOXEN_GITHUB_ENTERPRISE_URL"] || "https://github.com"
-    end
-
-    attr_writer :ghurl
-
-    # Repository URL template (required for GitHub Enterprise)
-
-    def repotemplate
-      default = 'https://github.com/%s'
-      @repotemplate || ENV["BOXEN_REPO_URL_TEMPLATE"] || default
-    end
-
-    attr_writer :repotemplate
-
-    # Does this Boxen use a GitHub Enterprise instance?
-
-    def enterprise?
-      ghurl != "https://github.com"
-    end
-
-    # The directory where repos live. Default is
-    # `"/Users/#{user}/src"`.
-
-    def srcdir
-      @srcdir || ENV["BOXEN_SRC_DIR"] || "/Users/#{user}/src"
-    end
-
-    attr_writer :srcdir
-
-    # Don't auto-create issues on failure? Default is `false`.
-    # Respects the `BOXEN_NO_ISSUE` environment variable.
-
-    def stealth?
-      !!ENV["BOXEN_NO_ISSUE"] || @stealth
-    end
-
-    attr_writer :stealth
-
-    # A GitHub OAuth token. Default is `nil`.
-
-    attr_reader :token
-
-    def token=(token)
-      @token = token
-      @api = nil
-    end
 
     # A local user login. Default is the `USER` environment variable.
 
@@ -309,22 +189,5 @@ module Boxen
 
     attr_writer :color
 
-    # The S3 host name. Default is `"s3.amazonaws.com"`.
-    # Respects the `BOXEN_S3_HOST` environment variable.
-
-    def s3host
-      @s3host || ENV["BOXEN_S3_HOST"] || "s3.amazonaws.com"
-    end
-
-    attr_writer :s3host
-
-    # The S3 bucket name. Default is `"boxen-downloads"`.
-    # Respects the `BOXEN_S3_BUCKET` environment variable.
-
-    def s3bucket
-      @s3bucket || ENV["BOXEN_S3_BUCKET"] || "boxen-downloads"
-    end
-
-    attr_writer :s3bucket
   end
 end

@@ -48,19 +48,19 @@ module Boxen
 
       # Don't ever complain about Hiera to me
       flags << ["--hiera_config", hiera_config]
-
+      flags << "--test"
       # Log to both the console and a file.
 
-      flags << ["--logdest", config.logfile]
-      flags << ["--logdest", "console"]
+      # flags << ["--logdest", config.logfile]
+      # flags << ["--logdest", "console"]
 
       # For some reason Puppet tries to set up a bunch of rrd stuff
       # (user, group) unless reports are completely disabled.
 
-      flags << "--no-report" unless config.report?
+      # flags << "--no-report" unless config.report?
       flags << "--detailed-exitcodes"
 
-      flags << "--graph" if config.graph?
+      # flags << "--graph" if config.graph?
 
       flags << "--show_diff"
 
@@ -76,14 +76,13 @@ module Boxen
       flags << "--debug" if config.debug?
       flags << "--noop"  if config.pretend?
 
-      flags << "--color=false" unless config.color?
+      # flags << "--color=false" unless config.color?
 
       flags.flatten
     end
 
     def run
       FileUtils.mkdir_p config.puppetdir
-
       FileUtils.rm_f config.logfile
 
       FileUtils.rm_rf "#{config.puppetdir}/var/reports" if config.report?
@@ -95,12 +94,6 @@ module Boxen
 
       if File.file? "Puppetfile"
         librarian = "#{config.repodir}/bin/librarian-puppet"
-
-        unless config.enterprise?
-          # Set an environment variable for librarian-puppet's
-          # github_tarball source strategy.
-          ENV["GITHUB_API_TOKEN"] = config.token
-        end
 
         librarian_command = [librarian, "install", "--path=#{config.repodir}/shared"]
         librarian_command << "--verbose" if config.debug?

@@ -42,6 +42,3 @@ module Boxen
     end
   end
 end
-
-require "boxen/hook/github_issue"
-require "boxen/hook/web"

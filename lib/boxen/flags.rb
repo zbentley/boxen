@@ -12,7 +12,6 @@ module Boxen
     attr_reader :homedir
     attr_reader :logfile
     attr_reader :login
-    attr_reader :token
     attr_reader :srcdir
     attr_reader :user
 
@@ -33,15 +32,6 @@ module Boxen
       @profile          = false
       @report           = false
       @graph            = false
-      @projects         = false
-      @stealth          = false
-      @disable_service  = false
-      @enable_service   = false
-      @restart_service  = false
-      @disable_services = false
-      @enable_services  = false
-      @restart_services = false
-      @list_services    = false
       @color            = true
 
       @options = OptionParser.new do |o|
@@ -51,7 +41,7 @@ module Boxen
           @debug = true
         end
 
-        o.on "--pretend", "--noop", "Don't make changes." do
+        o.on "--noop", "Don't make changes." do
           @pretend = true
         end
 
@@ -71,60 +61,12 @@ module Boxen
           @help = true
         end
 
-        o.on "--disable-service SERVICE", "Disable a Boxen service." do |service|
-          @disable_service = service
-        end
-
-        o.on "--enable-service SERVICE", "Enable a Boxen service." do |service|
-          @enable_service = service
-        end
-
-        o.on "--restart-service SERVICE", "Restart a Boxen service." do |service|
-          @restart_service = service
-        end
-
-        o.on "--disable-services", "Disable all Boxen services." do
-          @disable_services = true
-        end
-
-        o.on "--enable-services", "Enable all Boxen services." do
-          @enable_services = true
-        end
-
-        o.on "--restart-services", "Restart all Boxen services." do
-          @restart_services = true
-        end
-
-        o.on "--list-services", "List Boxen services." do
-          @list_services = true
-        end
-
         o.on "--homedir DIR", "Boxen's home directory." do |homedir|
           @homedir = homedir
         end
 
-        o.on "--logfile DIR", "Boxen's log file." do |logfile|
-          @logfile = logfile
-        end
-
-        o.on "--login LOGIN", "Your GitHub login." do |login|
-          @login = login
-        end
-
         o.on "--no-fde", "Don't require full disk encryption." do
           @fde = false
-        end
-
-        # --no-pull is used before options are parsed, but consumed here.
-
-        o.on "--no-pull", "Don't try to update code before applying."
-
-        o.on "--no-issue", "--stealth", "Don't open an issue on failure." do
-          @stealth = true
-        end
-
-        o.on "--token TOKEN", "Your GitHub OAuth token." do |token|
-          @token = token
         end
 
         o.on "--profile", "Profile the Puppet run." do
@@ -162,15 +104,11 @@ module Boxen
       config.fde           = fde?     if config.fde?
       config.homedir       = homedir  if homedir
       config.logfile       = logfile  if logfile
-      config.login         = login    if login
-      config.token         = token    if token
       config.pretend       = pretend?
       config.profile       = profile?
       config.future_parser = future_parser?
       config.report        = report?
       config.graph         = graph?
-      config.srcdir        = srcdir   if srcdir
-      config.stealth       = stealth?
       config.user          = user     if user
       config.color         = color?
 
