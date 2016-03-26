@@ -22,14 +22,14 @@ module Boxen
 
     def command
       manifestdir = "#{config.repodir}/manifests"
-      puppet      = "#{config.repodir}/bin/puppet"
+      puppet      = "#{config.homedir}/bin/puppet"
 
       [puppet, "apply", flags, manifestdir].flatten
     end
 
     def hiera_config
-      if File.exist? "#{config.repodir}/config/hiera.yaml"
-        "#{config.repodir}/config/hiera.yaml"
+      if File.exist? "#{config.homedir}/config/hiera.yaml"
+        "#{config.homedir}/config/hiera.yaml"
       else
         "/dev/null"
       end
@@ -42,9 +42,9 @@ module Boxen
       flags << ["--group",       "admin"]
       flags << ["--confdir",     "#{config.puppetdir}/conf"]
       flags << ["--vardir",      "#{config.puppetdir}/var"]
-      flags << ["--libdir",      "#{config.repodir}/lib"]#:#{root}/lib"]
+      flags << ["--libdir",      "#{config.homedir}/lib"]#:#{root}/lib"]
       flags << ["--libdir",      "#{root}/lib"]
-      flags << ["--modulepath",  "#{config.repodir}/modules:#{config.repodir}/shared"]
+      flags << ["--modulepath",  "#{config.homedir}/modules:#{config.homedir}/librarian-modules"]
 
       # Don't ever complain about Hiera to me
       flags << ["--hiera_config", hiera_config]
@@ -64,10 +64,10 @@ module Boxen
 
       flags << "--show_diff"
 
-      if config.profile?
-        flags << "--evaltrace"
-        flags << "--summarize"
-      end
+      # if config.profile?
+      #   flags << "--evaltrace"
+      #   flags << "--summarize"
+      # end
 
       if config.future_parser?
         flags << "--parser=future"
@@ -93,9 +93,9 @@ module Boxen
       FileUtils.touch config.logfile
 
       if File.file? "Puppetfile"
-        librarian = "#{config.repodir}/bin/librarian-puppet"
+        librarian = "#{config.homedir}/bin/librarian-puppet"
 
-        librarian_command = [librarian, "install", "--path=#{config.repodir}/shared"]
+        librarian_command = [librarian, "install", "--clean", "--path=#{config.homedir}/librarian-modules"]
         librarian_command << "--verbose" if config.debug?
 
         warn librarian_command.join(" ") if config.debug?

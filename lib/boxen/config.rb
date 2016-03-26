@@ -1,4 +1,3 @@
-require "fileutils"
 require "json"
 require "shellwords"
 
@@ -32,11 +31,9 @@ module Boxen
 
     def self.save(config)
       attrs = {
-        :email        => config.email,
         :fde          => config.fde?,
         :homedir      => config.homedir,
         :login        => config.login,
-        :name         => config.name,
         :puppetdir    => config.puppetdir,
         :user         => config.user,
       }
@@ -68,16 +65,6 @@ module Boxen
 
     attr_writer :debug
 
-    # A GitHub user's public email.
-
-    attr_accessor :email
-
-    # The shell script that loads Boxen's environment.
-
-    def envfile
-      "#{homedir}/env.sh"
-    end
-
     # Is full disk encryption required? Default is `true`. Respects
     # the `BOXEN_NO_FDE` environment variable.
 
@@ -91,17 +78,13 @@ module Boxen
     # `BOXEN_HOME` environment variable.
 
     def homedir
-      @homedir || ENV["BOXEN_HOME"] || "/opt/boxen"
+      @homedir || ENV["BOXEN_HOME"] || "/opt/boxen-temp"
     end
 
     attr_writer :homedir
 
-    # Boxen's log file. Default is `"#{repodir}/log/boxen.log"`.
-    # Respects the `BOXEN_LOG_FILE` environment variable. The log is
-    # overwritten on every run.
-
     def logfile
-      @logfile || ENV["BOXEN_LOG_FILE"] || "#{repodir}/log/boxen.log"
+      @logfile || ENV["BOXEN_LOG_FILE"] || "#{homedir}/log/boxen.log"
     end
 
     attr_writer :logfile
@@ -110,10 +93,6 @@ module Boxen
 
     attr_accessor :login
 
-    # A GitHub user's profile name.
-
-    attr_accessor :name
-
     # Just go through the motions? Default is `false`.
 
     def pretend?
@@ -121,14 +100,6 @@ module Boxen
     end
 
     attr_writer :pretend
-
-    # Run a profiler on Puppet? Default is `false`.
-
-    def profile?
-      !!@profile
-    end
-
-    attr_writer :profile
 
     # Enable the Puppet future parser? Default is `false`.
 
@@ -160,7 +131,7 @@ module Boxen
     # `BOXEN_PUPPET_DIR` environment variable.
 
     def puppetdir
-      @puppetdir || ENV["BOXEN_PUPPET_DIR"] || "/tmp/boxen/puppet"
+      @puppetdir || ENV["BOXEN_PUPPET_DIR"] || "/opt/boxen-temp/puppet"
     end
 
     attr_writer :puppetdir

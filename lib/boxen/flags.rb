@@ -1,5 +1,4 @@
 require "optparse"
-require "boxen/error"
 
 module Boxen
 
@@ -29,7 +28,6 @@ module Boxen
       @fde              = true
       @help             = false
       @pretend          = false
-      @profile          = false
       @report           = false
       @graph            = false
       @color            = true
@@ -69,20 +67,8 @@ module Boxen
           @fde = false
         end
 
-        o.on "--profile", "Profile the Puppet run." do
-          @profile = true
-        end
-
         o.on "--future-parser", "Enable the Puppet future parser" do
           @future_parser = true
-        end
-
-        o.on "--projects", "Show available projects." do
-          @projects = true
-        end
-
-        o.on "--srcdir DIR", "The directory where repos live." do |srcdir|
-          @srcdir = srcdir
         end
 
         o.on "--user USER", "Your local user." do |user|
@@ -105,7 +91,6 @@ module Boxen
       config.homedir       = homedir  if homedir
       config.logfile       = logfile  if logfile
       config.pretend       = pretend?
-      config.profile       = profile?
       config.future_parser = future_parser?
       config.report        = report?
       config.graph         = graph?
@@ -131,42 +116,8 @@ module Boxen
       @help
     end
 
-    def disable_services?
-      @disable_services
-    end
-
-    def enable_services?
-      @enable_services
-    end
-
-    def disable_service?
-      @disable_service
-    end
-
-    def enable_service?
-      @enable_service
-    end
-
-    def restart_service?
-      @restart_service
-    end
-
-    def restart_services?
-      @restart_services
-    end
-
-    def list_services?
-      @list_services
-    end
-
     def run?
-      !(
-        list_services? ||
-        restart_services? || restart_service? ||
-        enable_services? || enable_service? ||
-        disable_services? || disable_service? ||
-        help?
-      )
+      ! help?
     end
 
     # Parse `args` as an array of CLI argument Strings. Raises
@@ -178,15 +129,11 @@ module Boxen
       self
 
     rescue OptionParser::MissingArgument, OptionParser::InvalidOption => e
-      raise Boxen::Error, "#{e.message}\n#@options"
+      raise Error, "#{e.message}\n#@options"
     end
 
     def pretend?
       @pretend
-    end
-
-    def profile?
-      @profile
     end
 
     def future_parser?
@@ -199,14 +146,6 @@ module Boxen
 
     def graph?
       @graph
-    end
-
-    def projects?
-      @projects
-    end
-
-    def stealth?
-      @stealth
     end
 
     def color?
